@@ -1,0 +1,21 @@
+{
+  "en": {
+    "num1": "What's the first number?",
+    "num2": "What's the second number?",
+    "invalidNum": "Hmm, that doesn't look like a valid number.",
+    "selectOp": "What operation would you like to perform?\n1) Add 2) Subtract 3) Multiply 4) Divide",
+    "invalidOp": "Must choose 1, 2, 3 or 4",
+    "result": "The result is ",
+    "repeat": "Do you want to run another calculation? Y / N"
+  },
+
+  "fr": {
+    "num1": "What's the first number?",
+    "num2": "What's the second number?",
+    "invalidNum": "Hmm, that doesn't look like a valid number.",
+    "selectOp": "What operation would you like to perform?\n1) Add 2) Subtract 3) Multiply 4) Divide",
+    "invalidOp": "Must choose 1, 2, 3 or 4",
+    "result": "The result is ",
+    "repeat": "Do you want to run another calculation? Y / N"
+  }
+}
