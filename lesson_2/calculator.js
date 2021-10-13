@@ -68,4 +68,6 @@ while (true) {
 
   if (answer[0].toLowerCase() !== 'y') break;
 
+  // here's a note
+
 }
