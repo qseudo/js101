@@ -1,0 +1,10 @@
+{
+  "welcome": "Welcome to Mortgage / Car Loan calculator!",
+  "invalidInput": "Invalid input. Must enter only numbers greater than 0!",
+  "askLoanAmount": "How much is your total loan amount in dollars?",
+  "askAPR": "What is the APR (Annual Percentage Rate) of your loan?",
+  "askLoanDuration": "How many years is the term of your loan?",
+  "result": "Your monthly payment for the loan is $",
+  "again": "Would you like to calculate another loan? Y / N",
+  "invalidAnswer": "Please enter \"Y\" or \"N\"."
+}

@@ -1,0 +1,32 @@
+/*
+request input from the user:
+-total loan amount in dollars, if it's not a valid number, then ask again
+-annual percentage rate in percentage, as a whole number,
+if it's not a valid number, then ask again
+-loan duration in years, if it's not a valid number, then ask again
+convert the annual percentage rate whole number to a
+decimal percentage for calculations
+convert the loan duration in years to loan duration in months
+calculate the monthly payment and return the amount in dollars
+*/
+
+/*
+START
+
+WHILE (totalLoanAmount SUBPROCESS "invalid loan")
+  GET "enter the total loan amount in dollars"
+  SET totalLoanAmount
+WHILE (annualPercentageRate SUBPROCESS "invalid APR")
+  GET "enter your APR (annual percentage rate)"
+  SET annualPercentageRate
+WHILE (loanDurationInYears SUBPROCESS "invalid years")
+  GET "how many years is the terms of your loan?"
+  SET loanDurationInYears
+
+SET monthlyInterestRate = annualPercentageRate % 12
+SET loanDurationInMonths = loanDurationInYears * 12
+
+SET monthlyPayment = [formula]
+
+PRINT monthlyPayment
+*/
