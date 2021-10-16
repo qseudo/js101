@@ -70,6 +70,16 @@ function displayWinner (userChoice, computerChoice) {
   else return "Computer wins!";
 }
 
+function askToPlayAgain () {
+  let answer = readline.question().trim().toUpperCase();
+
+  while (answer !== "Y" && answer !== "N") {
+    promptUser('Invalid response! Choose "Y" or "N".');
+    answer = readline.question().trim().toUpperCase();
+  }
+  return answer;
+}
+
 while (true) {
   promptUser("Welcome to Rock, Paper, Scissors, Lizard, Spock! First to 3 wins is the Winner.");
   let computerScore = 0;
@@ -109,12 +119,7 @@ while (true) {
   }
 
   promptUser("Do you want to play again? Y / N");
-  let answer = readline.question().trim().toUpperCase();
-
-  while (answer !== "Y" && answer !== "N") {
-    promptUser('Invalid response! Choose "Y" or "N".');
-    answer = readline.question().trim().toUpperCase();
-  }
+  let answer = askToPlayAgain();
 
   if (answer !== "Y") break;
 }
