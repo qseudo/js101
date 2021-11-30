@@ -1,8 +1,10 @@
 const readlineSync = require('readline-sync');
-const FACE_CARD_VALUE = 10;
 
+const HIGHEST_NUMBER_BEFORE_BUST = 21;
+const FACE_CARD_VALUE = 10;
+const ACE_LOWER_VALUE = 1;
 const CARD_VALUES = {
-  Ace: [1, 11],
+  Ace: 11,
   King: FACE_CARD_VALUE,
   Queen: FACE_CARD_VALUE,
   Jack: FACE_CARD_VALUE,
@@ -54,11 +56,69 @@ function prompt(message) {
   console.log(`${message}`);
 }
 
-function displayCards(dealersHand, playersHand) {
-  prompt(`Dealer has: ${dealersHand[0][0]} and unknown card`);
-  prompt(`You have: ${playersHand[0][0]} and ${playersHand[1][0]}`);
-  // use andOr join function from tic-tac-toe proj to display playersHand
+function joinAnd(arr, delimiter = ', ', joinWord = 'and') {
+  let sentence;
+  let arrSentence = arr
+    .slice()
+    .map(card => card[0]);
+
+  if (arr.length >= 3) {
+    arrSentence[arrSentence.length - 1] = `${joinWord} ${String(arrSentence[arrSentence.length - 1])}`;
+
+    sentence = arrSentence.join(delimiter);
+  } else {
+    sentence = arrSentence.join(` ${joinWord} `);
+  }
+  return sentence;
 }
+
+function displayDealersCards(dealersHand, isDealersTurn) {
+  prompt(isDealersTurn ? `Dealer has: ${joinAnd(dealersHand)}` :
+    `Dealer has: ${dealersHand[0][0]} and unknown card`);
+}
+
+function displayPlayersCards(playersHand) {
+  prompt(`You have: ${joinAnd(playersHand)}`);
+}
+
+function displayAllPlayersCards(dealersHand, playersHand, isDealersTurn) {
+  displayDealersCards(dealersHand, isDealersTurn);
+  displayPlayersCards(playersHand);
+}
+
+function sortHandAcesLast(hand) {
+  return hand
+    .slice()
+    .sort((a, b) => CARD_VALUES[a[0]] - CARD_VALUES[b[0]]);
+}
+
+function calculateTotalOfHand(hand) {
+  hand = sortHandAcesLast(hand);
+  let total = 0;
+
+  hand.forEach(card => {
+    if (card[0] === "Ace") {
+      if (total + CARD_VALUES['Ace'] > HIGHEST_NUMBER_BEFORE_BUST) {
+        total += ACE_LOWER_VALUE;
+      } else {
+        total += CARD_VALUES['Ace'];
+      }
+    } else {
+      total += Number(CARD_VALUES[card[0]]);
+    }
+  });
+  return total;
+}
+
+function bust(hand) {
+  return calculateTotalOfHand(hand) > HIGHEST_NUMBER_BEFORE_BUST;
+}
+
+function displayTurn(isDealersTurn) {
+  prompt(isDealersTurn ? "It's the dealer's turn." : "It's your turn.");
+}
+
+let isDealersTurn = false;
 
 let deck = initializeDeck();
 shuffle(deck);
@@ -69,15 +129,62 @@ let playersHand = [];
 dealCardToHand(deck, dealersHand);
 dealCardToHand(deck, playersHand);
 dealCardToHand(deck, dealersHand);
-dealCardToHand(deck, playersHand);
-
-displayCards(dealersHand, playersHand);
+displayTurn(isDealersTurn);
 
 while (true) {
+  dealCardToHand(deck, playersHand);
+  if (bust(playersHand)) break;
+  displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
+
   prompt('Hit or Stay?');
   let answer = readlineSync.prompt().trim().toLowerCase();
+  while (answer !== "hit" && answer !== "h" && answer !== "s" && answer !== "stay") {
+    prompt('Invalid answer! Please enter "hit" or "stay"');
+    answer = readlineSync.prompt().trim().toLowerCase();
+  }
   if (answer === "s" || answer === "stay") break;
 }
+
+if (bust(playersHand)) {
+  displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
+  prompt('You busted!');
+  // leave loop
+} else {
+  isDealersTurn = true;
+
+  console.clear();
+  displayTurn(isDealersTurn);
+  displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
+
+  while (calculateTotalOfHand(dealersHand) < 17) {
+    prompt(`Dealer chooses 'hit'.`);
+    dealCardToHand(deck, dealersHand);
+    displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
+  }
+
+  if (bust(dealersHand)) {
+    prompt('Dealer has busted!');
+  } else {
+    prompt(`Dealer: ${calculateTotalOfHand(dealersHand)} Player: ${calculateTotalOfHand(playersHand)}`);
+    /* compare the two hands */
+  }
+}
+
+
+// dealer turn
+/*
+Change to dealer's turn:
+-Clear console
+-Display message that it's now dealer's turn
+-Display both player's cards
+-Until the dealers hand's value is >= 17,
+  -Hit
+  -If bust, or stay, exit the loop
+-If bust, player wins
+-Else,
+  -Compare the scores of the two players
+  -Display the winner
+*/
 
 /*
 Player turn:
