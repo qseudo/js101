@@ -1,8 +1,10 @@
 const readlineSync = require('readline-sync');
 
 const HIGHEST_NUMBER_BEFORE_BUST = 21;
+const HIGHEST_SAFE_NUMBER_FOR_DEALER = 17;
 const FACE_CARD_VALUE = 10;
 const ACE_LOWER_VALUE = 1;
+const POINTS_TO_WIN = 5;
 
 const CARD_VALUES = {
   Ace: 11,
@@ -116,8 +118,8 @@ function calculateTotalOfHand(hand) {
   return total;
 }
 
-function bust(hand) {
-  return calculateTotalOfHand(hand) > HIGHEST_NUMBER_BEFORE_BUST;
+function bust(handTotal) {
+  return handTotal > HIGHEST_NUMBER_BEFORE_BUST;
 }
 
 function displayTurn(isDealersTurn) {
@@ -129,31 +131,27 @@ function displayTurn(isDealersTurn) {
   prompt(decorativeBorder);
 }
 
-function determineWinner(playersHand, dealersHand) {
-  if (bust(playersHand)) {
+function determineWinner(playerTotal, dealerTotal) {
+  if (bust(playerTotal)) {
     return 'Dealer';
-  } else if (bust(dealersHand)) {
+  } else if (bust(dealerTotal)) {
     return 'Player';
-  } else if (
-    calculateTotalOfHand(playersHand) > calculateTotalOfHand(dealersHand)
-  ) {
+  } else if (playerTotal > dealerTotal) {
     return 'Player';
-  } else if (
-    calculateTotalOfHand(dealersHand) > calculateTotalOfHand(playersHand)
-  ) {
+  } else if (dealerTotal > playerTotal) {
     return 'Dealer';
   } else {
     return null;
   }
 }
 
-function displayWinner(playersHand, dealersHand) {
-  switch (determineWinner(playersHand, dealersHand)) {
+function displayWinner(winner) {
+  switch (winner) {
     case 'Player':
-      prompt(`Player wins!`);
+      prompt(`Player wins the round!`);
       break;
     case 'Dealer':
-      prompt(`Dealer wins!`);
+      prompt(`Dealer wins the round!`);
       break;
     default:
       prompt(`It's a tie!`);
@@ -171,7 +169,7 @@ function dealInitialCards(deck, playersHand, dealersHand, isDealersTurn) {
 function playersTurn(deck ,playersHand) {
   while (true) {
     dealCardToHand(deck, playersHand);
-    if (bust(playersHand)) break;
+    if (bust(calculateTotalOfHand(playersHand))) break;
     displayPlayersCards(playersHand);
 
     prompt('Hit or Stay?');
@@ -189,15 +187,15 @@ function dealersTurn(deck, playersHand, dealersHand, isDealersTurn) {
   displayTurn(isDealersTurn);
   displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
 
-  while (calculateTotalOfHand(dealersHand) < 17) {
+  while (calculateTotalOfHand(dealersHand) < HIGHEST_SAFE_NUMBER_FOR_DEALER) {
     prompt(`> Dealer chooses 'hit'`);
     dealCardToHand(deck, dealersHand);
     displayDealersCards(dealersHand, isDealersTurn);
   }
 }
 
-function displayCardTotals(playersHand, dealersHand) {
-  let message = `Dealer: ${calculateTotalOfHand(dealersHand)} Player: ${calculateTotalOfHand(playersHand)}`;
+function displayCardTotals(playerTotal, dealerTotal) {
+  let message = `Player: ${playerTotal} Dealer: ${dealerTotal}`;
   let decorativeBorder = '-'.repeat(message.length);
 
   prompt(decorativeBorder);
@@ -206,8 +204,7 @@ function displayCardTotals(playersHand, dealersHand) {
 }
 
 function greetingMessage() {
-  prompt('WELCOME TO TWENTY-ONE');
-  prompt('[Closest to 21 without going over wins]');
+  prompt(`WELCOME TO ${HIGHEST_NUMBER_BEFORE_BUST}! First to ${POINTS_TO_WIN} points is the winner.`);
 }
 
 function playAgain() {
@@ -220,40 +217,97 @@ function playAgain() {
   return answer;
 }
 
+function initializeScoreboard () {
+  return {
+    Player: 0,
+    Dealer: 0,
+  };
+}
+
+function updateScoreboard(scoreboard, winner) {
+  if (winner) {
+    scoreboard[winner] += 1;
+  }
+}
+
+function displayScoreboard(scoreboard) {
+  prompt(`Player: ${scoreboard['Player']} Dealer: ${scoreboard['Dealer']}`);
+}
+
+function detectWinnerOfMatch(scoreboard) {
+  if (scoreboard['Player'] === POINTS_TO_WIN) {
+    return 'Player';
+  } else if (scoreboard['Dealer'] === POINTS_TO_WIN) {
+    return 'Dealer';
+  } else {
+    return null;
+  }
+}
+
+function displayWinnerOfMatch(winner) {
+  let message = `${winner} wins the match!`;
+  let decorationBorder = '~'.repeat(message.length);
+
+  prompt(decorationBorder);
+  prompt(message);
+  prompt(decorationBorder);
+}
+
 let answer;
 
 do {
-  console.clear();
-  greetingMessage();
+  let winnerOfMatch;
+  let scoreboard = initializeScoreboard();
 
-  let deck = initializeDeck();
-  shuffle(deck);
+  while (true) {
+    console.clear();
+    greetingMessage();
+    displayScoreboard(scoreboard);
 
-  let dealersHand = [];
-  let playersHand = [];
+    let deck = initializeDeck();
+    shuffle(deck);
 
-  let isDealersTurn = false;
+    let dealersHand = [];
+    let playersHand = [];
 
-  dealInitialCards(deck, playersHand, dealersHand, isDealersTurn);
-  playersTurn(deck, playersHand);
+    let isDealersTurn = false;
 
-  if (bust(playersHand)) {
-    displayPlayersCards(playersHand);
-    prompt('You busted!');
-  } else {
-    isDealersTurn = true;
-    dealersTurn(deck, playersHand, dealersHand, isDealersTurn);
+    dealInitialCards(deck, playersHand, dealersHand, isDealersTurn);
+    playersTurn(deck, playersHand);
 
-    if (bust(dealersHand)) {
-      prompt('Dealer busted!');
+    let playerTotal = calculateTotalOfHand(playersHand);
+    let dealerTotal;
+
+    if (bust(playerTotal)) {
+      displayPlayersCards(playersHand);
+      prompt('You busted!');
     } else {
-      prompt(`> Dealer chooses 'stay'`);
-      displayCardTotals(playersHand, dealersHand);
-    }
-  }
-  displayWinner(playersHand, dealersHand);
+      isDealersTurn = true;
+      dealersTurn(deck, playersHand, dealersHand, isDealersTurn);
 
+      dealerTotal = calculateTotalOfHand(dealersHand);
+
+      if (bust(dealerTotal)) {
+        prompt('Dealer busted!');
+      } else {
+        prompt(`> Dealer chooses 'stay'`);
+        displayCardTotals(playerTotal, dealerTotal);
+      }
+    }
+
+    let winner = determineWinner(playerTotal, dealerTotal);
+    displayWinner(winner);
+    updateScoreboard(scoreboard, winner);
+
+    winnerOfMatch = detectWinnerOfMatch(scoreboard);
+    displayScoreboard(scoreboard);
+    if (winnerOfMatch) break;
+
+    prompt('Ready for the next round? Hit enter to continue');
+    readlineSync.prompt();
+  }
+  displayWinnerOfMatch(winnerOfMatch);
   answer = playAgain();
-} while (answer !== "n" && answer !== "no");
+} while (answer === "y" || answer === "yes");
 
 prompt("Thanks for playing!");
