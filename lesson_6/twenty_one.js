@@ -3,6 +3,7 @@ const readlineSync = require('readline-sync');
 const HIGHEST_NUMBER_BEFORE_BUST = 21;
 const FACE_CARD_VALUE = 10;
 const ACE_LOWER_VALUE = 1;
+
 const CARD_VALUES = {
   Ace: 11,
   King: FACE_CARD_VALUE,
@@ -82,8 +83,13 @@ function displayPlayersCards(playersHand) {
 }
 
 function displayAllPlayersCards(dealersHand, playersHand, isDealersTurn) {
-  displayDealersCards(dealersHand, isDealersTurn);
-  displayPlayersCards(playersHand);
+  if (isDealersTurn) {
+    displayPlayersCards(playersHand);
+    displayDealersCards(dealersHand, isDealersTurn);
+  } else {
+    displayDealersCards(dealersHand, isDealersTurn);
+    displayPlayersCards(playersHand);
+  }
 }
 
 function sortHandAcesLast(hand) {
@@ -115,100 +121,139 @@ function bust(hand) {
 }
 
 function displayTurn(isDealersTurn) {
-  prompt(isDealersTurn ? "It's the dealer's turn." : "It's your turn.");
+  let whoseTurnItIsString = isDealersTurn ? "Dealer's turn".toUpperCase() : "Your turn".toUpperCase();
+  let decorativeBorder = '='.repeat(whoseTurnItIsString.length);
+
+  prompt(decorativeBorder);
+  prompt(whoseTurnItIsString);
+  prompt(decorativeBorder);
 }
 
-let isDealersTurn = false;
-
-let deck = initializeDeck();
-shuffle(deck);
-
-let dealersHand = [];
-let playersHand = [];
-
-dealCardToHand(deck, dealersHand);
-dealCardToHand(deck, playersHand);
-dealCardToHand(deck, dealersHand);
-displayTurn(isDealersTurn);
-
-while (true) {
-  dealCardToHand(deck, playersHand);
-  if (bust(playersHand)) break;
-  displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
-
-  prompt('Hit or Stay?');
-  let answer = readlineSync.prompt().trim().toLowerCase();
-  while (answer !== "hit" && answer !== "h" && answer !== "s" && answer !== "stay") {
-    prompt('Invalid answer! Please enter "hit" or "stay"');
-    answer = readlineSync.prompt().trim().toLowerCase();
+function determineWinner(playersHand, dealersHand) {
+  if (bust(playersHand)) {
+    return 'Dealer';
+  } else if (bust(dealersHand)) {
+    return 'Player';
+  } else if (
+    calculateTotalOfHand(playersHand) > calculateTotalOfHand(dealersHand)
+  ) {
+    return 'Player';
+  } else if (
+    calculateTotalOfHand(dealersHand) > calculateTotalOfHand(playersHand)
+  ) {
+    return 'Dealer';
+  } else {
+    return null;
   }
-  if (answer === "s" || answer === "stay") break;
 }
 
-if (bust(playersHand)) {
-  displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
-  prompt('You busted!');
-  // leave loop
-} else {
-  isDealersTurn = true;
+function displayWinner(playersHand, dealersHand) {
+  switch (determineWinner(playersHand, dealersHand)) {
+    case 'Player':
+      prompt(`Player wins!`);
+      break;
+    case 'Dealer':
+      prompt(`Dealer wins!`);
+      break;
+    default:
+      prompt(`It's a tie!`);
+  }
+}
 
+function dealInitialCards(deck, playersHand, dealersHand, isDealersTurn) {
+  dealCardToHand(deck, dealersHand);
+  dealCardToHand(deck, playersHand);
+  dealCardToHand(deck, dealersHand);
+  displayTurn(isDealersTurn);
+  displayDealersCards(dealersHand, isDealersTurn);
+}
+
+function playersTurn(deck ,playersHand) {
+  while (true) {
+    dealCardToHand(deck, playersHand);
+    if (bust(playersHand)) break;
+    displayPlayersCards(playersHand);
+
+    prompt('Hit or Stay?');
+    let answer = readlineSync.prompt().toLowerCase();
+    while (answer !== "hit" && answer !== "h" && answer !== "s" && answer !== "stay") {
+      prompt('Invalid answer! Please enter "hit" or "stay"');
+      answer = readlineSync.prompt().toLowerCase();
+    }
+    if (answer === "s" || answer === "stay") break;
+  }
+}
+
+function dealersTurn(deck, playersHand, dealersHand, isDealersTurn) {
   console.clear();
   displayTurn(isDealersTurn);
   displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
 
   while (calculateTotalOfHand(dealersHand) < 17) {
-    prompt(`Dealer chooses 'hit'.`);
+    prompt(`> Dealer chooses 'hit'`);
     dealCardToHand(deck, dealersHand);
-    displayAllPlayersCards(dealersHand, playersHand, isDealersTurn);
-  }
-
-  if (bust(dealersHand)) {
-    prompt('Dealer has busted!');
-  } else {
-    prompt(`Dealer: ${calculateTotalOfHand(dealersHand)} Player: ${calculateTotalOfHand(playersHand)}`);
-    /* compare the two hands */
+    displayDealersCards(dealersHand, isDealersTurn);
   }
 }
 
+function displayCardTotals(playersHand, dealersHand) {
+  let message = `Dealer: ${calculateTotalOfHand(dealersHand)} Player: ${calculateTotalOfHand(playersHand)}`;
+  let decorativeBorder = '-'.repeat(message.length);
 
-// dealer turn
-/*
-Change to dealer's turn:
--Clear console
--Display message that it's now dealer's turn
--Display both player's cards
--Until the dealers hand's value is >= 17,
-  -Hit
-  -If bust, or stay, exit the loop
--If bust, player wins
--Else,
-  -Compare the scores of the two players
-  -Display the winner
-*/
+  prompt(decorativeBorder);
+  prompt(message);
+  prompt(decorativeBorder);
+}
 
-/*
-Player turn:
--Ask player if they would like to hit or stay
--If hit:
-  -Receive another card
--If stay:
-  -Dealer's turn
--If busted:
-  -Game over
+function greetingMessage() {
+  prompt('WELCOME TO TWENTY-ONE');
+  prompt('[Closest to 21 without going over wins]');
+}
 
-Ask player if they would like to hit or stay
-UNTIL => "stay" or busted
-*/
+function playAgain() {
+  prompt('Play again? yes/no');
+  let answer = readlineSync.prompt().toLowerCase();
+  while (answer !== "y" && answer !== "yes" && answer !== "n" && answer !== "no") {
+    prompt('Invalid answer! Please enter "yes" or "no"');
+    answer = readlineSync.prompt().toLowerCase();
+  }
+  return answer;
+}
 
-/*
-1. Initialize the deck
-1b. Shuffle the deck
-2. Deal cards to player and dealer
-3. Player turn: hit or stay
-  - repeat until bust or stay
-4. If player bust, dealer wins.
-5. Dealer's turn: hit or stay
-  - repeat until total >= 17
-6. If dealer busts, player wins
-7. Compare cards and declare winner.
-*/
+let answer;
+
+do {
+  console.clear();
+  greetingMessage();
+
+  let deck = initializeDeck();
+  shuffle(deck);
+
+  let dealersHand = [];
+  let playersHand = [];
+
+  let isDealersTurn = false;
+
+  dealInitialCards(deck, playersHand, dealersHand, isDealersTurn);
+  playersTurn(deck, playersHand);
+
+  if (bust(playersHand)) {
+    displayPlayersCards(playersHand);
+    prompt('You busted!');
+  } else {
+    isDealersTurn = true;
+    dealersTurn(deck, playersHand, dealersHand, isDealersTurn);
+
+    if (bust(dealersHand)) {
+      prompt('Dealer busted!');
+    } else {
+      prompt(`> Dealer chooses 'stay'`);
+      displayCardTotals(playersHand, dealersHand);
+    }
+  }
+  displayWinner(playersHand, dealersHand);
+
+  answer = playAgain();
+} while (answer !== "n" && answer !== "no");
+
+prompt("Thanks for playing!");
